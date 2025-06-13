@@ -1,16 +1,20 @@
 import CircularButton from "@/components/CircularButton";
+import GalleryPhoto from "@/components/GalleryPhoto";
 import RectangularButton from "@/components/RectangularButton";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as MediaLibrary from "expo-media-library";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+
+const ALBUM_NAME = "SU Camera App";
 
 export default function Gallery() {
   const [hasPermissions, setHasPermissions] = useState(false);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
   const [loading, setLoading] = useState(true);
-  const [galleryColumns, setGalleryColumns] = useState(3);
+  const [listMode, setListMode] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
 
   const router = useRouter();
 
@@ -29,27 +33,87 @@ export default function Gallery() {
   }, []);
 
   const getPhotos = async () => {
-    const readPhotos = await MediaLibrary.getAssetsAsync({
-      mediaType: MediaLibrary.MediaType.photo,
-      first: 99,
-      sortBy: [MediaLibrary.SortBy.creationTime],
-    });
-    setPhotos(readPhotos.assets);
+    setLoading(true);
+    let album = await MediaLibrary.getAlbumAsync(ALBUM_NAME);
+    let assets: MediaLibrary.Asset[] = [];
+    if (album) {
+      const readPhotos = await MediaLibrary.getAssetsAsync({
+        album: album.id,
+        mediaType: MediaLibrary.MediaType.photo,
+        first: 99,
+        sortBy: [MediaLibrary.SortBy.creationTime],
+      });
+      assets = readPhotos.assets;
+    }
+    setPhotos(assets);
     setLoading(false);
+    setSelected([]);
   }
 
-  useEffect(() => {
-    if (hasPermissions) {
+  useFocusEffect(
+    useCallback(() => {
+      if (hasPermissions) {
+        getPhotos();
+      }
+    }, [hasPermissions])
+  );
+
+
+  const handlePhotoPress = (id: string) => {
+    if (selected.length > 0) {
+      setSelected((prev) => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
+    }
+  };
+  const handlePhotoLongPress = (id: string) => {
+    if (selected.length === 0) {
+      setSelected([id]);
+    }
+  };
+  const handleDelete = async () => {
+    if (selected.length === 0) return;
+    try {
+      await MediaLibrary.deleteAssetsAsync(selected);
+      ToastAndroid.showWithGravity(
+        `Deleted ${selected.length} photo(s).`,
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+      setSelected([]);
       getPhotos();
     }
-  }, [hasPermissions]);
+    catch (error) {
+      ToastAndroid.showWithGravity(
+        "Failed to delete selected photos.",
+        ToastAndroid.LONG,
+        ToastAndroid.CENTER
+      );
+      getPhotos();
+    }
+  };
+
+
+  const getPaddedPhotos = () => {
+    if (listMode) {
+      return photos;
+    }
+    const remainder = photos.length % 3;
+    if (remainder === 0) {
+      return photos;
+    }
+    const padding = Array.from({ length: 3 - remainder }, (_, i) => ({ id: `empty-${i}`, isPlaceholder: true }));
+    return [...photos, ...padding];
+  };
+
+  const isPlaceholder = (item: any): item is { id: string; isPlaceholder: boolean } => {
+    return item && item.isPlaceholder === true;
+  };
 
   return (
     <View
       style={{
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "center"
       }}
     >
       {loading && (
@@ -65,39 +129,49 @@ export default function Gallery() {
       {!loading && hasPermissions && photos.length === 0 && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={styles.text}>No photos found in the media library.</Text>
+          <RectangularButton
+            title="refresh"
+            onPress={getPhotos}
+            style={{ marginTop: 15 }}
+          />
         </View>
       )}
       {!loading && hasPermissions && (
         <FlatList
-        numColumns={galleryColumns}
+        numColumns={listMode ? 1 : 3}
         style={{ flex: 1, width: "100%" }}
-        key={galleryColumns}
-        data={photos}
+        key={listMode ? "list" : "grid"}
+        data={getPaddedPhotos()}
         renderItem={({ item }) => (
-          <View
-            style={{
-              flex: 1,
-              margin: 5,
-              aspectRatio: 1,
-              backgroundColor: "#ccc",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Image source={{ uri: item.uri }} style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" }} />
-          </View>
+          isPlaceholder(item) ? (
+            <View style={{ flex: 1, aspectRatio: 1, margin: 2, backgroundColor: 'transparent' }} />
+          ) : (
+            <GalleryPhoto
+              item={item}
+              selected={selected.includes(item.id)}
+              onPress={() => handlePhotoPress(item.id)}
+              onLongPress={() => handlePhotoLongPress(item.id)}
+            />
+          )
         )}
         keyExtractor={(item) => item.id}
         />
       )}
 
       <View style={styles.buttonRow}>
-        <RectangularButton title="Layout" onPress={() => {}} />
+        <RectangularButton style={{width: 125}} title={listMode ? "grid mode" : "list mode"} onPress={() => {
+          setListMode(!listMode);
+        }} />
         <View style={styles.bigButtonWrapper}/>
         <CircularButton size={85} onPress={() => {router.navigate("/camera")}}>
           <Ionicons name="camera-outline" size={35} color="white" />
         </CircularButton>
-        <RectangularButton title="Delete" onPress={() => {}} />
+        <RectangularButton
+          style={{width: 125}}
+          title={`delete${selected.length > 0 ? ` (${selected.length})` : ""}`}
+          onPress={handleDelete}
+          disabled={selected.length === 0}
+        />
       </View>
 
     </View>

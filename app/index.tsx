@@ -14,7 +14,7 @@ export default function Index() {
         <Text style={styles.text}>Your absolute best camera app out there.</Text>
         <Text style={styles.text}>Ready for this awesome adventure?</Text>
       </View>
-      <RectangularButton title="Yes!" onPress={() => router.navigate("/gallery")}/>
+      <RectangularButton title="yes!" onPress={() => router.navigate("/gallery")}/>
     </View>
     </>
   );

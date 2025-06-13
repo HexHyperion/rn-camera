@@ -8,6 +8,8 @@ import { Platform, StatusBar, StyleSheet, Text, ToastAndroid, View } from "react
 
 type CameraFacing = "back" | "front";
 
+const ALBUM_NAME = "SU Camera App";
+
 export default function Camera() {
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>("back")
@@ -27,7 +29,14 @@ export default function Camera() {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync();
-        await MediaLibrary.createAssetAsync(photo.uri);
+        let album = await MediaLibrary.getAlbumAsync(ALBUM_NAME);
+        if (!album) {
+          const asset = await MediaLibrary.createAssetAsync(photo.uri);
+          album = await MediaLibrary.createAlbumAsync(ALBUM_NAME, asset, false);
+        }
+        else {
+          await MediaLibrary.createAssetAsync(photo.uri, album);
+        }
       }
       catch (error) {
         ToastAndroid.showWithGravity(
