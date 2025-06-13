@@ -1,9 +1,9 @@
 import React from 'react'
-import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
 
-export default function CircularButton({title, size, onPress} : {title: string, size: number, onPress: () => void}) {
+export default function CircularButton({title, size, style, onPress} : {title: string, size: number, style?: ViewStyle, onPress: () => void}) {
   return (
-    <TouchableOpacity style={{...styles.button, width: size, height: size, borderRadius: size/2}} onPress={onPress}>
+    <TouchableOpacity style={{...style, ...styles.button, width: size, height: size, borderRadius: size/2}} onPress={onPress}>
       <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
   )

@@ -1,9 +1,9 @@
 import React from 'react'
-import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
 
-export default function RectangularButton({title, onPress} : {title: string, onPress: () => void}) {
+export default function RectangularButton({title, style, onPress} : {title: string, style?: ViewStyle, onPress: () => void}) {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
+    <TouchableOpacity style={{...style, ...styles.button}} onPress={onPress}>
       <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
   )
