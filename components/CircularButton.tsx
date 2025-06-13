@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
 
-export default function CircularButton({title, size, style, onPress} : {title: string, size: number, style?: ViewStyle, onPress: () => void}) {
+export default function CircularButton({title, size, style, onPress, children} : {title?: string, size: number, style?: ViewStyle, onPress: () => void, children?: ReactNode}) {
   return (
     <TouchableOpacity style={{...styles.button, width: size, height: size, borderRadius: size/2, ...style}} onPress={onPress}>
-      <Text style={styles.text}>{title}</Text>
+      {children ? children : <Text style={styles.text}>{title ?? ""}</Text>}
     </TouchableOpacity>
   )
 }

@@ -1,5 +1,6 @@
 import CircularButton from "@/components/CircularButton";
 import RectangularButton from "@/components/RectangularButton";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -19,7 +20,7 @@ export default function Gallery() {
       setHasPermissions(status === "granted");
       if (status !== "granted") {
         ToastAndroid.showWithGravity(
-          "Permission to access media library is required.",
+          "Permission to access the media library is required.",
           ToastAndroid.SHORT,
           ToastAndroid.CENTER
         );
@@ -35,30 +36,11 @@ export default function Gallery() {
     });
     setPhotos(readPhotos.assets);
     setLoading(false);
-    if (readPhotos.assets.length === 0) {
-      ToastAndroid.showWithGravity(
-        "No photos found in the media library.",
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER
-      );
-    }
-    else {
-      ToastAndroid.showWithGravity(
-        `Found ${readPhotos.assets.length} photos.`,
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER
-      );
-    }
   }
 
   useEffect(() => {
     if (hasPermissions) {
       getPhotos();
-      ToastAndroid.showWithGravity(
-        "Access to media library granted, loading photos...",
-        ToastAndroid.SHORT,
-        ToastAndroid.CENTER
-      );
     }
   }, [hasPermissions]);
 
@@ -70,12 +52,20 @@ export default function Gallery() {
         alignItems: "center",
       }}
     >
-      {loading && <Text style={styles.text}>Loading...</Text>}
+      {loading && (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={styles.text}>Loading...</Text>
+        </View>
+      )}
       {!loading && !hasPermissions && (
-        <Text style={styles.text}>No access to the media library!</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={styles.text}>No access to the media library!</Text>
+        </View>
       )}
       {!loading && hasPermissions && photos.length === 0 && (
-        <Text style={styles.text}>No photos found in the media library.</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={styles.text}>No photos found in the media library.</Text>
+        </View>
       )}
       {!loading && hasPermissions && (
         <FlatList
@@ -103,7 +93,10 @@ export default function Gallery() {
 
       <View style={styles.buttonRow}>
         <RectangularButton title="Layout" onPress={() => {}} />
-        <CircularButton size={90} title="Camera" onPress={() => {router.navigate("/camera")}} />
+        <View style={styles.bigButtonWrapper}/>
+        <CircularButton size={85} onPress={() => {router.navigate("/camera")}}>
+          <Ionicons name="camera-outline" size={35} color="white" />
+        </CircularButton>
         <RectangularButton title="Delete" onPress={() => {}} />
       </View>
 
@@ -123,5 +116,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
     alignItems: "center",
     paddingBlock: 12,
-  }
+    maxHeight: 90,
+  },
+  bigButtonWrapper: {
+    width: 126,
+    height: 126,
+    borderRadius: 63,
+    position: "absolute",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+  },
 });
