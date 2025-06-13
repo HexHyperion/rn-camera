@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "transparent",
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: "white",
   },
   bigButton: {

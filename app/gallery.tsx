@@ -63,6 +63,9 @@ export default function Gallery() {
     if (selected.length > 0) {
       setSelected((prev) => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
     }
+    else {
+      router.navigate({ pathname: "/viewer", params: { id } });
+    }
   };
   const handlePhotoLongPress = (id: string) => {
     if (selected.length === 0) {
@@ -144,7 +147,7 @@ export default function Gallery() {
         data={getPaddedPhotos()}
         renderItem={({ item }) => (
           isPlaceholder(item) ? (
-            <View style={{ flex: 1, aspectRatio: 1, margin: 2, backgroundColor: 'transparent' }} />
+            <View style={{ flex: 1, aspectRatio: 1, margin: 5, backgroundColor: 'transparent' }} />
           ) : (
             <GalleryPhoto
               item={item}
@@ -161,6 +164,7 @@ export default function Gallery() {
       <View style={styles.buttonRow}>
         <RectangularButton style={{width: 125}} title={listMode ? "grid mode" : "list mode"} onPress={() => {
           setListMode(!listMode);
+          setSelected([]);
         }} />
         <View style={styles.bigButtonWrapper}/>
         <CircularButton size={85} onPress={() => {router.navigate("/camera")}}>
@@ -193,9 +197,9 @@ const styles = StyleSheet.create({
     maxHeight: 90,
   },
   bigButtonWrapper: {
-    width: 126,
-    height: 126,
-    borderRadius: 63,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
     position: "absolute",
     display: "flex",
     justifyContent: "center",
