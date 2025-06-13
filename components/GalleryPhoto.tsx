@@ -1,10 +1,16 @@
-import * as MediaLibrary from 'expo-media-library'
-import React from 'react'
-import { Image, StyleSheet, TouchableOpacity } from 'react-native'
+import * as MediaLibrary from 'expo-media-library';
+import React, { useCallback } from 'react';
+import { Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function RectangularButton({item, onPress, onLongPress, selected} : {item: MediaLibrary.Asset, onPress?: () => void, onLongPress?: () => void, selected?: boolean}) {
+  const handlePress = useCallback(() => {
+    onPress?.();
+  }, [onPress]);
+  const handleLongPress = useCallback(() => {
+    onLongPress?.();
+  }, [onLongPress]);
   return (
-    <TouchableOpacity style={[styles.button, selected && styles.selected]} onPress={onPress} onLongPress={onLongPress}>
+    <TouchableOpacity style={[styles.button, selected && styles.selected]} onPress={handlePress} onLongPress={handleLongPress}>
       <Image source={{ uri: item.uri }} style={[styles.image, selected && styles.selectedImage]} />
     </TouchableOpacity>
   )

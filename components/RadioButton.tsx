@@ -1,10 +1,12 @@
+import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function RadioButton({value, checked = false, onPress} : {value: string, checked?: boolean, onPress?: (value: string) => void}) {
+  const handleTouchEnd = useCallback(() => {
+    onPress?.(value);
+  }, [onPress, value]);
   return (
-    <View style={styles.wrapper} onTouchEnd={() => {
-      onPress?.(value);
-    }}>
+    <View style={styles.wrapper} onTouchEnd={handleTouchEnd}>
       <View style={[styles.radio, checked && { backgroundColor: "white" }]}/>
       <Text style={styles.title}>{value}</Text>
     </View>

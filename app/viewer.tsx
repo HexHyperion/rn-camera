@@ -3,7 +3,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 export default function Viewer() {
@@ -36,7 +36,7 @@ export default function Viewer() {
     })();
   }, [id]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!photo) {
       return;
     }
@@ -56,9 +56,9 @@ export default function Viewer() {
         ToastAndroid.CENTER
       );
     }
-  };
+  }, [photo, router]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     if (!photo) {
       return;
     }
@@ -72,7 +72,7 @@ export default function Viewer() {
         ToastAndroid.CENTER
       );
     }
-  };
+  }, [photo]);
 
   return (
     <View style={{ flex: 1, backgroundColor: "black", position: "relative" }}>

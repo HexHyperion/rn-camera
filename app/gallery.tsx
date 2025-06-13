@@ -59,20 +59,20 @@ export default function Gallery() {
   );
 
 
-  const handlePhotoPress = (id: string) => {
+  const handlePhotoPress = useCallback((id: string) => {
     if (selected.length > 0) {
       setSelected((prev) => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
     }
     else {
       router.navigate({ pathname: "/viewer", params: { id } });
     }
-  };
-  const handlePhotoLongPress = (id: string) => {
+  }, [selected, router]);
+  const handlePhotoLongPress = useCallback((id: string) => {
     if (selected.length === 0) {
       setSelected([id]);
     }
-  };
-  const handleDelete = async () => {
+  }, [selected]);
+  const handleDelete = useCallback(async () => {
     if (selected.length === 0) return;
     try {
       await MediaLibrary.deleteAssetsAsync(selected);
@@ -92,7 +92,7 @@ export default function Gallery() {
       );
       getPhotos();
     }
-  };
+  }, [selected, getPhotos]);
 
 
   const getPaddedPhotos = () => {

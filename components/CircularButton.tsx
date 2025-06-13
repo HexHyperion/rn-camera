@@ -1,9 +1,12 @@
-import React, { ReactNode } from 'react'
-import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
+import React, { ReactNode, useCallback } from 'react';
+import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
 
 export default function CircularButton({title, size, style, onPress, children} : {title?: string, size: number, style?: ViewStyle, onPress: () => void, children?: ReactNode}) {
+  const handlePress = useCallback(() => {
+    onPress();
+  }, [onPress]);
   return (
-    <TouchableOpacity style={{...styles.button, width: size, height: size, borderRadius: size/2, ...style}} onPress={onPress}>
+    <TouchableOpacity style={{...styles.button, width: size, height: size, borderRadius: size/2, ...style}} onPress={handlePress}>
       {children ? children : <Text style={styles.text}>{title ?? ""}</Text>}
     </TouchableOpacity>
   )

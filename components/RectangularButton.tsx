@@ -1,9 +1,12 @@
-import React from 'react'
-import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
+import React, { useCallback } from 'react';
+import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
 
 export default function RectangularButton({title, style, disabled, onPress} : {title: string, style?: ViewStyle, disabled?: boolean, onPress: () => void}) {
+  const handlePress = useCallback(() => {
+    onPress();
+  }, [onPress]);
   return (
-    <TouchableOpacity style={{...styles.button, ...style, borderColor: disabled ? "#aaaaaa" : "white"}} onPress={onPress} disabled={disabled}>
+    <TouchableOpacity style={{...styles.button, ...style, borderColor: disabled ? "#aaaaaa" : "white"}} onPress={handlePress} disabled={disabled}>
       <Text style={{...styles.text, color: disabled ? "#aaaaaa" : "white"}}>{title}</Text>
     </TouchableOpacity>
   )

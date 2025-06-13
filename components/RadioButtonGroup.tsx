@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import RadioButton from './RadioButton';
 
 export default function RadioButtonGroup({title, columns, data, onChange, initialSelected} : {title: string, columns: number, data: string[], onChange: (value: string) => void, initialSelected?: string}) {
   const [selected, setSelected] = useState<string | null>(initialSelected ?? null);
 
-  const handlePress = (value: string) => {
+  const handlePress = useCallback((value: string) => {
     setSelected(value);
     onChange(value);
-  };
+  }, [onChange]);
 
   return (
     <View style={styles.container}>
