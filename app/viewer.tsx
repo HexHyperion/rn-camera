@@ -75,17 +75,22 @@ export default function Viewer() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "black" }}>
+    <View style={{ flex: 1, backgroundColor: "black", position: "relative" }}>
       {loading && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <Text style={styles.text}>Loading...</Text>
         </View>
       )}
       {!loading && photo && (
-        <Image
-          source={{ uri: photo.uri }}
-          style={{ flex: 1, width: "100%", resizeMode: "contain" }}
-        />
+        <>
+          <Text style={{...styles.text, textAlign: "center", position: "absolute", width: "100%"}} numberOfLines={1}>
+            {`${photo.width}x${photo.height}` || "Photo"}
+          </Text>
+          <Image
+            source={{ uri: photo.uri }}
+            style={{ flex: 1, width: "100%", resizeMode: "contain" }}
+          />
+        </>
       )}
       <View style={styles.buttonRow}>
         <CircularButton size={80} onPress={handleShare}>
