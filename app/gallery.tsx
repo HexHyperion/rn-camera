@@ -1,4 +1,5 @@
 import CircularButton from "@/components/CircularButton";
+import RectangularButton from "@/components/RectangularButton";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -100,7 +101,12 @@ export default function Gallery() {
         />
       )}
 
-      <CircularButton size={80} title="Camera" style={{margin: 15}} onPress={() => {router.navigate("/camera")}} />
+      <View style={styles.buttonRow}>
+        <RectangularButton title="Layout" onPress={() => {}} />
+        <CircularButton size={90} title="Camera" onPress={() => {router.navigate("/camera")}} />
+        <RectangularButton title="Delete" onPress={() => {}} />
+      </View>
+
     </View>
   );
 }
@@ -109,5 +115,13 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "monospace",
     color: "white"
+  },
+  buttonRow: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    paddingBlock: 12,
   }
 });

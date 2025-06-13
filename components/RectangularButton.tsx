@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native'
 
 export default function RectangularButton({title, style, onPress} : {title: string, style?: ViewStyle, onPress: () => void}) {
   return (
-    <TouchableOpacity style={{...style, ...styles.button}} onPress={onPress}>
+    <TouchableOpacity style={{...styles.button, ...style}} onPress={onPress}>
       <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
   )
