@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: "monospace",
-    color: "white"
+    color: "white",
+    textAlign: "center",
   }
 })

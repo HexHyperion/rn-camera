@@ -2,7 +2,7 @@ import CircularButton from "@/components/CircularButton";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 export default function Gallery() {
   const [hasPermissions, setHasPermissions] = useState(false);
@@ -29,7 +29,8 @@ export default function Gallery() {
   const getPhotos = async () => {
     const readPhotos = await MediaLibrary.getAssetsAsync({
       mediaType: MediaLibrary.MediaType.photo,
-      first: 100,
+      first: 99,
+      sortBy: [MediaLibrary.SortBy.creationTime],
     });
     setPhotos(readPhotos.assets);
     setLoading(false);
@@ -78,6 +79,7 @@ export default function Gallery() {
       {!loading && hasPermissions && (
         <FlatList
         numColumns={galleryColumns}
+        style={{ flex: 1, width: "100%" }}
         key={galleryColumns}
         data={photos}
         renderItem={({ item }) => (
@@ -91,14 +93,14 @@ export default function Gallery() {
               alignItems: "center",
             }}
           >
-            <Text>{item.filename}</Text>
+            <Image source={{ uri: item.uri }} style={{ width: "100%", height: "100%", backgroundColor: "#1a1a1a" }} />
           </View>
         )}
         keyExtractor={(item) => item.id}
         />
       )}
 
-      <CircularButton size={100} title="Camera" style={{margin: 15}} onPress={() => {router.navigate("/camera")}} />
+      <CircularButton size={80} title="Camera" style={{margin: 15}} onPress={() => {router.navigate("/camera")}} />
     </View>
   );
 }

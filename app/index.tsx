@@ -10,7 +10,10 @@ export default function Index() {
     <StatusBar barStyle="light-content"/>
     <View style={styles.body}>
       <Text style={styles.header}>e kamer</Text>
-      <Text style={styles.text}>Your absolute best camera app out there. Ready for this awesome adventure?</Text>
+      <View>
+        <Text style={styles.text}>Your absolute best camera app out there.</Text>
+        <Text style={styles.text}>Ready for this awesome adventure?</Text>
+      </View>
       <RectangularButton title="Yes!" onPress={() => router.navigate("/gallery")}/>
     </View>
     </>
