@@ -123,12 +123,16 @@ export default function Camera() {
       </View>
 
       <CircularButton size={60} style={styles.loneButton} onPress={() => {
-
+        router.navigate("/map");
       }}>
         <Ionicons name="map-outline" size={26} color="white"/>
       </CircularButton>
 
-      <BottomSheet ref={bottomSheetRef} snapPoints={["4%", "30%", "60%"]} backgroundStyle={{ backgroundColor: "#000000dd" }} handleIndicatorStyle={{ backgroundColor: "white" }}>
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={["4%", "30%", "60%"]}
+        backgroundStyle={{ backgroundColor: "#000000dd" }}
+        handleIndicatorStyle={{ backgroundColor: "white" }}>
         <BottomSheetView style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 25 }}>
           <Text/>
           <RadioButtonGroup
