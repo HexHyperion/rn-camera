@@ -3,7 +3,9 @@ import RadioButtonGroup from "@/components/RadioButtonGroup";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraRatio, CameraView, useCameraPermissions } from "expo-camera";
+import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +31,7 @@ export default function Camera() {
   ]);
   const [size, setSize] = useState("4000x3000");
   const [ratio, setRatio] = useState<CameraRatio>("4:3");
+  const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -47,6 +50,11 @@ export default function Camera() {
         setAvailableSizes(sizes);
       }
     })();
+
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermission(status);
+    })();
   }, []);
 
   const takePicture = async () => {
@@ -54,12 +62,51 @@ export default function Camera() {
       try {
         const photo = await cameraRef.current.takePictureAsync();
         let album = await MediaLibrary.getAlbumAsync(ALBUM_NAME);
+        let asset;
         if (!album) {
-          const asset = await MediaLibrary.createAssetAsync(photo.uri);
+          asset = await MediaLibrary.createAssetAsync(photo.uri);
           album = await MediaLibrary.createAlbumAsync(ALBUM_NAME, asset, false);
         }
         else {
-          await MediaLibrary.createAssetAsync(photo.uri, album);
+          asset = await MediaLibrary.createAssetAsync(photo.uri, album);
+        }
+
+        try {
+          if (locationPermission === "granted") {
+            const location = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Low,
+              timeInterval: 5000,
+            });
+            const photoLocation = {
+              id: asset.id,
+              uri: asset.uri,
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              timestamp: Date.now()
+            };
+            const key = "photoLocations";
+            const prev = await AsyncStorage.getItem(key);
+            let arr = [];
+            if (prev) {
+              arr = JSON.parse(prev);
+            }
+            arr.push(photoLocation);
+            await AsyncStorage.setItem(key, JSON.stringify(arr));
+          }
+          else {
+            ToastAndroid.showWithGravity(
+              "Location permission not granted, location data not saved.",
+              ToastAndroid.SHORT,
+              ToastAndroid.CENTER
+            );
+          }
+        }
+        catch (e) {
+          ToastAndroid.showWithGravity(
+            "Failed to save location data.",
+            ToastAndroid.SHORT,
+            ToastAndroid.CENTER
+          );
         }
       }
       catch (error) {

@@ -27,7 +27,8 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
-    backgroundColor: "black"
+    backgroundColor: "black",
+    borderRadius: 2,
   },
   selected: {
     padding: 5,
