@@ -1,4 +1,3 @@
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function MapTooltip({ markerX, markerY, photo, style }: { markerX: number, markerY: number, photo: any, style?: any }) {
