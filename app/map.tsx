@@ -1,16 +1,18 @@
-import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import MapTooltip from "@/components/MapTooltip";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListRenderItem } from "react-native";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MapView, { Marker } from "react-native-maps";
 
 export default function Map() {
   const [photoLocations, setPhotoLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [photosAtLocation, setPhotosAtLocation] = useState<any[]>([]);
+  const [tooltipPosition, setTooltipPosition] = useState<{ x: number, y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
@@ -39,12 +41,27 @@ export default function Map() {
     return groups;
   }, [photoLocations]);
 
-  const handleMarkerPress = useCallback((lat: number, lng: number) => {
-    setSelectedLocation({ latitude: lat, longitude: lng });
+  const handleMarkerPress = useCallback(async (lat: number, lng: number) => {
     const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    const location = { latitude: lat, longitude: lng };
+
+    setSelectedLocation(location);
     setPhotosAtLocation(groupedPhotos[key] || []);
+    setIsDragging(false);
+
+    if (mapRef.current) {
+      try {
+        const point = await mapRef.current.pointForCoordinate(location);
+        setTooltipPosition(point);
+      }
+      catch {
+        setTooltipPosition(null);
+      }
+    }
+
     bottomSheetRef.current?.expand?.();
   }, [groupedPhotos]);
+
 
   const renderPhotoItem: ListRenderItem<any> = ({ item }) => {
     if (!item) return null;
@@ -67,48 +84,75 @@ export default function Map() {
   };
 
   return (
-    <GestureHandlerRootView>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", position: "relative" }}>
-        <MapView
-          ref={mapRef}
-          style={{ width: "100%", height: "100%" }}
-          initialRegion={{
-            latitude: 50.06571839718029,
-            longitude: 19.94302213951292,
-            latitudeDelta: 0.3,
-            longitudeDelta: 0.3
-          }}>
-          {Object.entries(groupedPhotos).map(([key, photos]) => {
-            const { latitude, longitude } = photos[0];
-            return (
-              <Marker
-                key={key}
-                coordinate={{ latitude, longitude }}
-                onPress={() => handleMarkerPress(latitude, longitude)}
-              />
-            );
-          })}
-        </MapView>
-        <BottomSheet
-          ref={bottomSheetRef}
-          snapPoints={["4%", "40%"]}
-          backgroundStyle={{ backgroundColor: "black" }}
-          handleIndicatorStyle={{ backgroundColor: "white" }}>
-            {selectedLocation && photosAtLocation.length > 0 ? (
-              <BottomSheetFlatList
-                data={photosAtLocation.filter(item => item.id && item.uri)}
-                horizontal
-                keyExtractor={(item: any) => item.id}
-                renderItem={renderPhotoItem}
-                contentContainerStyle={{ gap: 10 }}
-                style={{ padding: 10, marginBlock: 10 }}
-              />
-            ) : (
-              <Text style={styles.text}>Tap a marker to see photos at that location.</Text>
-            )}
-        </BottomSheet>
-      </View>
-    </GestureHandlerRootView>
+    <View style={{ flex: 1 }}>
+      <MapView
+        ref={mapRef}
+        style={{ width: "100%", height: "100%" }}
+        initialRegion={{
+          latitude: 50.06571839718029,
+          longitude: 19.94302213951292,
+          latitudeDelta: 0.3,
+          longitudeDelta: 0.3,
+        }}
+        onPanDrag={() => setIsDragging(true)}
+        onRegionChangeComplete={async () => {
+          if (selectedLocation && mapRef.current) {
+            try {
+              const point = await mapRef.current.pointForCoordinate(selectedLocation);
+              setTooltipPosition(point);
+            }
+            catch {
+              setTooltipPosition(null);
+            }
+          }
+          setIsDragging(false);
+        }}
+      >
+
+        {Object.entries(groupedPhotos).map(([key, photos]) => {
+          const { latitude, longitude } = photos[0];
+          return (
+            <Marker
+              key={key}
+              coordinate={{ latitude, longitude }}
+              onPress={() => handleMarkerPress(latitude, longitude)}
+            />
+          );
+        })}
+      </MapView>
+
+      {/* The native Callout is kinda broken, to say nicely, therefore
+          I use a custom one to be absolutely sure it shows up on Android */}
+      {tooltipPosition && !isDragging && photosAtLocation.length > 0 &&
+        <MapTooltip
+          markerX={tooltipPosition.x}
+          markerY={tooltipPosition.y}
+          photo={photosAtLocation[0]}
+        />
+      }
+
+      <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={["4%", "40%"]}
+        backgroundStyle={{ backgroundColor: "black" }}
+        handleIndicatorStyle={{ backgroundColor: "white" }}
+      >
+        {selectedLocation && photosAtLocation.length > 0 ? (
+          <BottomSheetFlatList
+            data={photosAtLocation.filter((item) => item.id && item.uri)}
+            horizontal
+            keyExtractor={(item: any) => item.id}
+            renderItem={renderPhotoItem}
+            contentContainerStyle={{ gap: 10 }}
+            style={{ padding: 10, marginBlock: 10 }}
+          />
+        ) : (
+          <Text style={styles.text}>
+            Tap a marker to see photos at that location.
+          </Text>
+        )}
+      </BottomSheet>
+    </View>
   );
 }
 

@@ -10,7 +10,6 @@ import * as MediaLibrary from "expo-media-library";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, ToastAndroid, View } from "react-native";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 type CameraFacing = "back" | "front";
 
@@ -129,7 +128,6 @@ export default function Camera() {
   }, [permission, requestPermission]);
 
   return (
-    <GestureHandlerRootView>
     <View
       style={{
         flex: 1,
@@ -210,7 +208,6 @@ export default function Camera() {
         </BottomSheetView>
       </BottomSheet>
     </View>
-    </GestureHandlerRootView>
   );
 }
 
