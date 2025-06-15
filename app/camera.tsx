@@ -9,7 +9,7 @@ import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, StatusBar, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Dimensions, Platform, StatusBar, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 type CameraFacing = "back" | "front";
 
@@ -33,29 +33,32 @@ export default function Camera() {
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
   const [instanceKey, setInstanceKey] = useState(0);
   const [layoutFix, setLayoutFix] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const navigation = useNavigation();
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
+  const screenWidth = Dimensions.get("window").width;
+  const screenHeight = Dimensions.get("window").height;
 
   useEffect(() => {
+    let isMounted = true;
     navigation.setOptions({
       headerShown: false,
     });
-
-    // Doesn't work
     (async () => {
       if (cameraRef.current) {
         const sizes = await cameraRef.current.getAvailablePictureSizesAsync();
-        setAvailableSizes(sizes);
+        if (isMounted) setAvailableSizes(sizes);
       }
     })();
-
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      setLocationPermission(status);
+      if (isMounted) setLocationPermission(status);
     })();
+    setLoading(false);
+    return () => { isMounted = false; };
   }, []);
 
   const takePicture = async () => {
@@ -135,6 +138,14 @@ export default function Camera() {
     }, [])
   );
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "black" }}>
+        <ActivityIndicator size="large" color="white" />
+      </View>
+    );
+  }
+
   return (
     <View
       key={instanceKey}
@@ -152,7 +163,15 @@ export default function Camera() {
       {cameraReady && (
         <CameraView
           ref={cameraRef}
-          style={{ flex: 1, width: "100%", height: "100%" }}
+          style={
+            ratio === "1:1"
+              ? {
+                  width: Math.min(screenWidth, screenHeight),
+                  height: Math.min(screenWidth, screenHeight),
+                  alignSelf: "center",
+                }
+              : { flex: 1, width: "100%", height: "100%" }
+          }
           facing={cameraFacing}
           zoom={zoom}
           enableTorch={torch}

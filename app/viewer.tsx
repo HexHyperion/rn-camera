@@ -5,23 +5,26 @@ import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
 import { useCallback, useEffect, useState } from "react";
-import { Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 export default function Viewer() {
   const [photo, setPhoto] = useState<MediaLibrary.Asset | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = typeof params.id === "string" ? params.id : undefined;
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
     (async () => {
-      if (!id || typeof id !== "string") {
+      if (!id) {
+        setLoading(false);
         return;
       }
       try {
         const asset = await MediaLibrary.getAssetInfoAsync(id);
-        setPhoto(asset as MediaLibrary.Asset);
+        if (isMounted) setPhoto(asset as MediaLibrary.Asset);
       }
       catch (e) {
         ToastAndroid.showWithGravity(
@@ -29,13 +32,14 @@ export default function Viewer() {
           ToastAndroid.SHORT,
           ToastAndroid.CENTER
         );
-        router.back();
+        if (isMounted) router.back();
       }
       finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     })();
-  }, [id]);
+    return () => { isMounted = false; };
+  }, [id, router]);
 
   const handleDelete = useCallback(async () => {
     if (!photo) {
@@ -86,13 +90,21 @@ export default function Viewer() {
     <View style={{ flex: 1, backgroundColor: "black", position: "relative" }}>
       {loading && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={styles.text}>Loading...</Text>
+          <ActivityIndicator size="large" color="white" />
+        </View>
+      )}
+      {!loading && !photo && (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={styles.text}>Photo not found.</Text>
+          <CircularButton size={80} onPress={() => router.back()}>
+            <Ionicons name="arrow-back-outline" size={32} color="white" />
+          </CircularButton>
         </View>
       )}
       {!loading && photo && (
         <>
           <Text style={{...styles.text, textAlign: "center", position: "absolute", width: "100%"}} numberOfLines={1}>
-            {`${photo.width}x${photo.height}` || "Photo"}
+            {photo.width && photo.height ? `${photo.width}x${photo.height}` : "Photo"}
           </Text>
           <Image
             source={{ uri: photo.uri }}
@@ -100,14 +112,16 @@ export default function Viewer() {
           />
         </>
       )}
-      <View style={styles.buttonRow}>
-        <CircularButton size={80} onPress={handleShare}>
-          <Ionicons name="share-outline" size={32} color="white" />
-        </CircularButton>
-        <CircularButton size={80} onPress={handleDelete}>
-          <Ionicons name="trash-outline" size={32} color="white" />
-        </CircularButton>
-      </View>
+      {!loading && photo && (
+        <View style={styles.buttonRow}>
+          <CircularButton size={80} onPress={handleShare}>
+            <Ionicons name="share-outline" size={32} color="white" />
+          </CircularButton>
+          <CircularButton size={80} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={32} color="white" />
+          </CircularButton>
+        </View>
+      )}
     </View>
   );
 }

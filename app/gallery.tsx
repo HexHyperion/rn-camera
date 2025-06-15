@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as MediaLibrary from "expo-media-library";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
+import { ActivityIndicator, FlatList, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 const ALBUM_NAME = "SU Camera App";
 
@@ -20,17 +20,16 @@ export default function Gallery() {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
     (async () => {
       const { status } = await MediaLibrary.requestPermissionsAsync();
-      setHasPermissions(status === "granted");
+      if (isMounted) setHasPermissions(status === "granted");
       if (status !== "granted") {
-        ToastAndroid.showWithGravity(
-          "Permission to access the media library is required.",
-          ToastAndroid.SHORT,
-          ToastAndroid.CENTER
-        );
+        if (isMounted) setLoading(false);
+        return;
       }
     })();
+    return () => { isMounted = false; };
   }, []);
 
   const getPhotos = async () => {
@@ -143,46 +142,40 @@ export default function Gallery() {
     >
       {loading && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={styles.text}>Loading...</Text>
+          <ActivityIndicator size="large" color="white" />
         </View>
       )}
       {!loading && !hasPermissions && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={styles.text}>No access to the media library!</Text>
+          <Text style={styles.text}>No permission to access photos.</Text>
         </View>
       )}
       {!loading && hasPermissions && photos.length === 0 && (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={styles.text}>No photos found in the media library.</Text>
-          <RectangularButton
-            title="refresh"
-            onPress={getPhotos}
-            style={{ marginTop: 15 }}
-          />
+          <Text style={styles.text}>No photos found.</Text>
         </View>
       )}
-      {!loading && hasPermissions && (
+      {!loading && hasPermissions && photos.length > 0 && (
         <FlatList
-        numColumns={listMode ? 1 : 3}
-        style={{ flex: 1, width: "100%" }}
-        key={listMode ? "list" : "grid"}
-        data={getPaddedPhotos()}
-        renderItem={({ item }) => (
-          isPlaceholder(item) ? (
-            <View style={{ flex: 1, aspectRatio: 1, margin: 5, backgroundColor: 'transparent' }} />
-          ) : (
-            <GalleryPhoto
-              item={item}
-              selected={selected.includes(item.id)}
-              onPress={() => handlePhotoPress(item.id)}
-              onLongPress={() => handlePhotoLongPress(item.id)}
-            />
-          )
-        )}
-        keyExtractor={(item) => item.id}
+          numColumns={listMode ? 1 : 3}
+          style={{ flex: 1, width: "100%" }}
+          key={listMode ? "list" : "grid"}
+          data={getPaddedPhotos()}
+          renderItem={({ item }) => (
+            isPlaceholder(item) ? (
+              <View style={{ flex: 1, aspectRatio: 1, margin: 5, backgroundColor: 'transparent' }} />
+            ) : (
+              <GalleryPhoto
+                item={item}
+                selected={selected.includes(item.id)}
+                onPress={() => handlePhotoPress(item.id)}
+                onLongPress={() => handlePhotoLongPress(item.id)}
+              />
+            )
+          )}
+          keyExtractor={(item) => item.id}
         />
       )}
-
       <View style={styles.buttonRow}>
         <RectangularButton style={{width: 125}} title={listMode ? "grid mode" : "list mode"} onPress={() => {
           setListMode(!listMode);

@@ -4,28 +4,35 @@ import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListRenderItem } from "react-native";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 export default function Map() {
   const [photoLocations, setPhotoLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [photosAtLocation, setPhotosAtLocation] = useState<any[]>([]);
-  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null); // NEW: selected photo id
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number, y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const mapRef = useRef<MapView>(null);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
 
   useEffect(() => {
+    let isMounted = true;
     (async () => {
+      setLoading(true);
       const key = "photoLocations";
       const data = await AsyncStorage.getItem(key);
-      if (data) {
-        setPhotoLocations(JSON.parse(data));
+      if (isMounted) {
+        if (data) {
+          setPhotoLocations(JSON.parse(data));
+        }
+        setLoading(false);
       }
     })();
+    return () => { isMounted = false; };
   }, []);
 
   const groupedPhotos = useMemo(() => {
@@ -65,8 +72,7 @@ export default function Map() {
     }
 
     bottomSheetRef.current?.expand?.();
-  }, [groupedPhotos]);
-
+  }, [groupedPhotos, selectedPhotoId]);
 
   const renderPhotoItem: ListRenderItem<any> = ({ item }) => {
     if (!item) return null;
@@ -81,16 +87,8 @@ export default function Map() {
           source={{ uri: item.uri }}
           style={{ flex: 1, width: "100%", height: undefined, borderRadius: 8, marginBottom: 5, resizeMode: "cover", alignSelf: "stretch", opacity: isSelected ? 0.7 : 1 }}
         />
-        <View style={{ marginTop: 5 }}>
-          <Text style={{ color: 'white', fontFamily: 'monospace' }}>
-            <Text style={{ fontWeight: 'bold' }}>Lat.:</Text> {item.latitude.toFixed(5)}
-          </Text>
-          <Text style={{ color: 'white', fontFamily: 'monospace' }}>
-            <Text style={{ fontWeight: 'bold' }}>Long.:</Text> {item.longitude.toFixed(5)}
-          </Text>
-        </View>
       </TouchableOpacity>
-    )
+    );
   };
 
   const handleMapPress = useCallback(() => {
@@ -102,6 +100,22 @@ export default function Map() {
       bottomSheetRef.current?.snapToIndex?.(0);
     }
   }, [isDragging]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="white" />
+      </View>
+    );
+  }
+
+  if (!photoLocations.length) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={styles.text}>No photo locations found.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
