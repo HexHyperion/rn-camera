@@ -1,16 +1,17 @@
 import MapTooltip from "@/components/MapTooltip";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import BottomSheet, { BottomSheetFlatList, BottomSheetView } from "@gorhom/bottom-sheet";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListRenderItem } from "react-native";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 export default function Map() {
   const [photoLocations, setPhotoLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [photosAtLocation, setPhotosAtLocation] = useState<any[]>([]);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null); // NEW: selected photo id
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number, y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -46,7 +47,11 @@ export default function Map() {
     const location = { latitude: lat, longitude: lng };
 
     setSelectedLocation(location);
-    setPhotosAtLocation(groupedPhotos[key] || []);
+    const photos = groupedPhotos[key] || [];
+    setPhotosAtLocation(photos);
+    if (!selectedPhotoId) {
+      setSelectedPhotoId(photos.length > 0 ? photos[0].id : null);
+    }
     setIsDragging(false);
 
     if (mapRef.current) {
@@ -65,11 +70,16 @@ export default function Map() {
 
   const renderPhotoItem: ListRenderItem<any> = ({ item }) => {
     if (!item) return null;
+    const isSelected = item.id === selectedPhotoId;
     return (
-      <View style={{ flex: 1, flexDirection: "column", justifyContent: "space-between", backgroundColor: "#0f0f0f", borderRadius: 10, padding: 10, minWidth: 250 }}>
+      <TouchableOpacity
+        style={{ ...styles.photoListItem, borderColor: isSelected ? "white" : "transparent" }}
+        onPress={() => setSelectedPhotoId(item.id)}
+        activeOpacity={0.8}
+      >
         <Image
           source={{ uri: item.uri }}
-          style={{ flex: 1, width: "100%", height: undefined, borderRadius: 8, marginBottom: 5, resizeMode: "cover", alignSelf: "stretch" }}
+          style={{ flex: 1, width: "100%", height: undefined, borderRadius: 8, marginBottom: 5, resizeMode: "cover", alignSelf: "stretch", opacity: isSelected ? 0.7 : 1 }}
         />
         <View style={{ marginTop: 5 }}>
           <Text style={{ color: 'white', fontFamily: 'monospace' }}>
@@ -79,9 +89,19 @@ export default function Map() {
             <Text style={{ fontWeight: 'bold' }}>Long.:</Text> {item.longitude.toFixed(5)}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
     )
   };
+
+  const handleMapPress = useCallback(() => {
+    if (!isDragging) {
+      setSelectedLocation(null);
+      setPhotosAtLocation([]);
+      setSelectedPhotoId(null);
+      setTooltipPosition(null);
+      bottomSheetRef.current?.snapToIndex?.(0);
+    }
+  }, [isDragging]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -95,6 +115,7 @@ export default function Map() {
           longitudeDelta: 0.3,
         }}
         onPanDrag={() => setIsDragging(true)}
+        onPress={handleMapPress}
         onRegionChangeComplete={async () => {
           if (selectedLocation && mapRef.current) {
             try {
@@ -127,7 +148,7 @@ export default function Map() {
         <MapTooltip
           markerX={tooltipPosition.x}
           markerY={tooltipPosition.y}
-          photo={photosAtLocation[0]}
+          photo={photosAtLocation.find(p => p.id === selectedPhotoId) || photosAtLocation[0]}
         />
       }
 
@@ -144,12 +165,15 @@ export default function Map() {
             keyExtractor={(item: any) => item.id}
             renderItem={renderPhotoItem}
             contentContainerStyle={{ gap: 10 }}
-            style={{ padding: 10, marginBlock: 10 }}
+            style={{ margin: 10 }}
+            extraData={selectedPhotoId}
           />
         ) : (
-          <Text style={styles.text}>
-            Tap a marker to see photos at that location.
-          </Text>
+          <BottomSheetView style={{ padding: 20, alignItems: "center" }}>
+            <Text style={styles.text}>
+              Tap a marker to see photos at that location.
+            </Text>
+          </BottomSheetView>
         )}
       </BottomSheet>
     </View>
@@ -161,4 +185,14 @@ const styles = StyleSheet.create({
     fontFamily: "monospace",
     color: "white"
   },
+  photoListItem: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    backgroundColor: "#0f0f0f",
+    borderRadius: 10,
+    padding: 5,
+    minWidth: 250,
+    borderWidth: 5
+  }
 });
