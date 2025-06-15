@@ -2,6 +2,7 @@ import CircularButton from "@/components/CircularButton";
 import GalleryPhoto from "@/components/GalleryPhoto";
 import RectangularButton from "@/components/RectangularButton";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as MediaLibrary from "expo-media-library";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -48,6 +49,20 @@ export default function Gallery() {
     setPhotos(assets);
     setLoading(false);
     setSelected([]);
+
+    try {
+      const key = "photoLocations";
+      const data = await AsyncStorage.getItem(key);
+      if (data) {
+        let photoLocations = JSON.parse(data);
+        const existingIds = new Set(assets.map((a) => a.id));
+        const filtered = photoLocations.filter((photo: any) => existingIds.has(photo.id));
+        if (filtered.length !== photoLocations.length) {
+          await AsyncStorage.setItem(key, JSON.stringify(filtered));
+        }
+      }
+    }
+    catch (e) {}
   }
 
   useFocusEffect(
@@ -76,6 +91,13 @@ export default function Gallery() {
     if (selected.length === 0) return;
     try {
       await MediaLibrary.deleteAssetsAsync(selected);
+      const key = "photoLocations";
+      const data = await AsyncStorage.getItem(key);
+      if (data) {
+        let photoLocations = JSON.parse(data);
+        photoLocations = photoLocations.filter((photo: any) => !selected.includes(photo.id));
+        await AsyncStorage.setItem(key, JSON.stringify(photoLocations));
+      }
       ToastAndroid.showWithGravity(
         `Deleted ${selected.length} photo(s).`,
         ToastAndroid.SHORT,

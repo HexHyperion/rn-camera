@@ -7,8 +7,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraRatio, CameraView, useCameraPermissions } from "expo-camera";
 import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
-import { useNavigation, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useNavigation, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, StatusBar, StyleSheet, Text, ToastAndroid, View } from "react-native";
 
 type CameraFacing = "back" | "front";
@@ -31,6 +31,8 @@ export default function Camera() {
   const [size, setSize] = useState("4000x3000");
   const [ratio, setRatio] = useState<CameraRatio>("4:3");
   const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
+  const [instanceKey, setInstanceKey] = useState(0);
+  const [layoutFix, setLayoutFix] = useState(0);
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -127,14 +129,22 @@ export default function Camera() {
     }
   }, [permission, requestPermission]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setInstanceKey(k => k + 1);
+    }, [])
+  );
+
   return (
     <View
+      key={instanceKey}
       style={{
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
         position: "relative"
       }}
+      onLayout={() => setLayoutFix(f => f + 1)}
     >
       {!permission && (
         <Text style={styles.text}>No access to the camera!</Text>
@@ -148,6 +158,7 @@ export default function Camera() {
           enableTorch={torch}
           pictureSize={size}
           ratio={ratio}
+          key={layoutFix}
         />
       )}
 
@@ -175,7 +186,7 @@ export default function Camera() {
 
       <BottomSheet
         ref={bottomSheetRef}
-        snapPoints={["4%", "30%", "60%"]}
+        snapPoints={["4%"]}
         backgroundStyle={{ backgroundColor: "#000000dd" }}
         handleIndicatorStyle={{ backgroundColor: "white" }}>
         <BottomSheetView style={{ padding: 10, display: "flex", flexDirection: "column", alignItems: "center", gap: 25 }}>
@@ -183,7 +194,7 @@ export default function Camera() {
           <RadioButtonGroup
             title="camera zoom"
             columns={6}
-            data={["0", "0.25", "0.5", "0.75", "1"]}
+            data={["0", "0.15", "0.25", "0.5", "0.75", "1"]}
             initialSelected={zoom.toString()}
             onChange={(value) => setZoom(parseFloat(value) ?? 0)}/>
           <RadioButtonGroup

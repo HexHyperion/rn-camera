@@ -7,7 +7,7 @@ export default function MapTooltip({ markerX, markerY, photo, style }: { markerX
       style={[styles.tooltipContainer, { top: markerY - 100, left: markerX - 100 }, style]}
       pointerEvents="none"
     >
-      <Text style={styles.tooltipText}>Photo #{photo?.id}</Text>
+      <Text style={{...styles.tooltipText, fontWeight: "bold"}}>Photo #{photo?.id}</Text>
       <Text style={styles.tooltipText}>
         {photo?.timestamp ? new Date(photo.timestamp).toLocaleString() : "No date"}
       </Text>
@@ -29,6 +29,6 @@ const styles = StyleSheet.create({
   tooltipText: {
     color: "white",
     fontFamily: "monospace",
-    fontSize: 12,
+    fontSize: 12
   },
 });

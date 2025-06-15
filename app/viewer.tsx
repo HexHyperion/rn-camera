@@ -1,5 +1,6 @@
 import CircularButton from "@/components/CircularButton";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
@@ -42,6 +43,13 @@ export default function Viewer() {
     }
     try {
       await MediaLibrary.deleteAssetsAsync([photo.id]);
+      const key = "photoLocations";
+      const data = await AsyncStorage.getItem(key);
+      if (data) {
+        let photoLocations = JSON.parse(data);
+        photoLocations = photoLocations.filter((p: any) => p.id !== photo.id);
+        await AsyncStorage.setItem(key, JSON.stringify(photoLocations));
+      }
       ToastAndroid.showWithGravity(
         "Photo deleted.",
         ToastAndroid.SHORT,
