@@ -1,4 +1,5 @@
 import { Stack } from "expo-router";
+import { Dimensions, StatusBar } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
@@ -6,7 +7,8 @@ export default function RootLayout() {
     <GestureHandlerRootView>
       <Stack screenOptions={{
         contentStyle: {
-          backgroundColor: "black"
+          backgroundColor: "black",
+          paddingBottom: Dimensions.get("screen").height - Dimensions.get("window").height - (StatusBar.currentHeight ?? 0)
         },
         headerStyle: {
           backgroundColor: "black"

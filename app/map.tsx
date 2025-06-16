@@ -87,6 +87,8 @@ export default function Map() {
           source={{ uri: item.uri }}
           style={{ flex: 1, width: "100%", height: undefined, borderRadius: 8, marginBottom: 5, resizeMode: "cover", alignSelf: "stretch", opacity: isSelected ? 0.7 : 1 }}
         />
+        <Text style={styles.text}>Lat.: {item.latitude}</Text>
+        <Text style={styles.text}>Long.: {item.longitude}</Text>
       </TouchableOpacity>
     );
   };
